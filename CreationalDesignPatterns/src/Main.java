@@ -1,6 +1,8 @@
 import PrototypePattern.Student;
+import SingeltonPattern.DoubleLocking.DBConnectionLock;
 import SingeltonPattern.EagerInitialization.DBConnectionEager;
 import SingeltonPattern.LazyInitialization.DBConnectionLazy;
+import SingeltonPattern.Synchronized.DBConnectionSync;
 
 public class Main {
     public static void main(String[] args) {
@@ -16,5 +18,7 @@ public class Main {
         System.out.println("Singelton Pattern: lazyPattern");
         DBConnectionLazy dbConnectionLazy1 = DBConnectionLazy.getInstance();
         DBConnectionLazy dbConnectionLazy2 = DBConnectionLazy.getInstance();
+        DBConnectionSync dbConnectionSync = DBConnectionSync.getInstance();
+        DBConnectionLock dbConnectionLock = DBConnectionLock.getInstance();
     }
 }
