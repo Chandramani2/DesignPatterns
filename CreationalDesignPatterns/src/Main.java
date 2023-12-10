@@ -1,3 +1,5 @@
+import FactoryPattern.ShapeFactory;
+import FactoryPattern.Shapes.Shape;
 import PrototypePattern.Student;
 import SingeltonPattern.DoubleLocking.DBConnectionLock;
 import SingeltonPattern.EagerInitialization.DBConnectionEager;
@@ -20,5 +22,17 @@ public class Main {
         DBConnectionLazy dbConnectionLazy2 = DBConnectionLazy.getInstance();
         DBConnectionSync dbConnectionSync = DBConnectionSync.getInstance();
         DBConnectionLock dbConnectionLock = DBConnectionLock.getInstance();
+
+        //Factory Pattern
+        System.out.println("Factory Pattern: ");
+        ShapeFactory shapeFactory1 = new ShapeFactory();
+        Shape circleObj = shapeFactory1.getInstance("circle");
+        circleObj.setRadius(2);
+        System.out.println(circleObj.calculateArea());
+        ShapeFactory shapeFactory2 = new ShapeFactory();
+        Shape rectangleObj = shapeFactory2.getInstance("rectangle");
+        rectangleObj.setLength(5);
+        rectangleObj.setBreadth(2);
+        System.out.println(rectangleObj.calculateArea());
     }
 }
