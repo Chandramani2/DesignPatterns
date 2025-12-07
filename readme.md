@@ -33,6 +33,7 @@ public class Singleton {
         return instance;
     }
 }
+```
 
 🔹 Factory Method
 Use when: A class can't anticipate the class of objects it must create. It delegates creation to subclasses.
@@ -55,6 +56,7 @@ abstract class Dialog {
         okButton.render();
     }
 }
+```
 
 🔹 Builder
 Use when: You need to construct complex objects step-by-step (e.g., an SQL query builder, a Pizza with toppings).
@@ -65,6 +67,7 @@ User user = new User.Builder()
     .setAge(30)
     .setEmail("alice@example.com")
     .build();
+```
 
 🔹 Prototype
 Use when: Creating an object is costly (e.g., parsing a database), and you want to clone an existing instance instead of creating a new one from scratch.
@@ -77,6 +80,7 @@ abstract class Shape implements Cloneable {
         return clone;
     }
 }
+```
 
 🔹 Abstract Factory
 Use when: You need to create families of related objects (e.g., DarkTheme Scrollbar + DarkTheme Window vs. LightTheme Scrollbar + LightTheme Window).
@@ -104,6 +108,7 @@ class BirdAdapter implements Bird {
         toyDuck.squeak(); 
     }
 }
+```
 
 🔹 Decorator
 Use when: You want to add responsibilities to individual objects dynamically without affecting other objects (e.g., Java I/O Streams).
@@ -116,6 +121,7 @@ c = new MilkDecorator(c);
 c = new SugarDecorator(c); 
 
 System.out.println(c.getCost()); // Cost of Coffee + Milk + Sugar
+```
 
 🔹 Facade
 Use when: You want to provide a simplified interface to a complex subsystem (e.g., a "Smart Home" class that turns on lights, heater, and music with one button).
@@ -127,6 +133,7 @@ class VideoConverterFacade {
         return new File(filename + "." + format);
     }
 }
+```
 
 🔹 Proxy
 Use when: You need a placeholder for another object to control access to it (e.g., Lazy loading images, access control).
@@ -148,3 +155,4 @@ class ProxyImage implements Image {
         realImage.display();
     }
 }
+```
