@@ -50,7 +50,7 @@ classDiagram
     Observer <|.. EmailSubscriber
     Observer <|.. MobileAppUser
     YoutubeChannel o-- Observer : notifies >
-
+```
 ---
 
 ## 📂 Project Structure
