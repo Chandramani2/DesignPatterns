@@ -1,5 +1,20 @@
 package com.designpatterns.main;
-
+/*
+        ObserverPattern/
+    ├── src/
+    │   └── com/
+    │       └── designpatterns/
+    │           ├── com.designpatterns.main/
+    │           │   └── YoutubeApp.java         // The Entry Point
+    │           ├── interfaces/
+    │           │   ├── Subject.java            // The "Publisher" interface
+    │           │   └── Observer.java           // The "Subscriber" interface
+    │           ├── subject/
+    │           │   └── YoutubeChannel.java     // Concrete Subject
+    │           └── observers/
+    │               ├── EmailSubscriber.java    // Concrete Observer 1
+    │               └── MobileAppUser.java      // Concrete Observer 2
+ */
 import com.designpatterns.observers.EmailSubscriber;
 import com.designpatterns.observers.MobileAppUser;
 import com.designpatterns.subject.YoutubeChannel;
