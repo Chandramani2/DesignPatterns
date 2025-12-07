@@ -1,8 +1,55 @@
-# YouTube Observer Pattern Implementation 📹
+# 📹 YouTube Observer Pattern Implementation
 
-This project demonstrates the **Observer Design Pattern** in Java by simulating a YouTube notification system. 
+![Java](https://img.shields.io/badge/Language-Java-orange?style=for-the-badge&logo=java)
+![Pattern](https://img.shields.io/badge/Pattern-Observer-blue?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Educational-green?style=for-the-badge)
 
-In this simulation, a **YouTube Channel** (the Subject) automatically notifies its **Subscribers** (the Observers) whenever a new video is uploaded. The subscribers receive these notifications differently based on their type (e.g., via Email or via Mobile App Push Notification).
+> A clean, modular Java implementation of the **Observer Design Pattern** simulating a real-world YouTube subscription system.
+
+---
+
+## 📖 Overview
+
+In this project, we simulate the relationship between a **YouTube Channel** and its **Subscribers**.
+
+* **The Subject (Publisher):** The YouTube Channel. It holds the state (content).
+* **The Observer (Subscriber):** The Users. They wait for notifications.
+
+**The Workflow:**
+When a channel uploads a video, it automatically "pushes" a notification to all registered subscribers. The subscribers handle this notification differently based on their specific implementation (e.g., an Email vs. a Mobile Push Notification).
+
+---
+
+## 🏗️ Architecture & Design
+
+### UML Diagram
+```mermaid
+classDiagram
+    class Subject {
+        <<interface>>
+        +subscribe(Observer o)
+        +unsubscribe(Observer o)
+        +notifyObservers()
+    }
+    class Observer {
+        <<interface>>
+        +update(String msg)
+    }
+    class YoutubeChannel {
+        -List<Observer> subscribers
+        +uploadVideo(String title)
+    }
+    class EmailSubscriber {
+        +update(String msg)
+    }
+    class MobileAppUser {
+        +update(String msg)
+    }
+
+    Subject <|.. YoutubeChannel
+    Observer <|.. EmailSubscriber
+    Observer <|.. MobileAppUser
+    YoutubeChannel o-- Observer : notifies >
 
 ---
 
@@ -27,42 +74,41 @@ ObserverPattern/
 │               └── YoutubeApp.java
 ```
 
-🧠 Core Concepts & Code Explanation
-1. The Interfaces (/interfaces)
+### 🧠 Core Concepts & Code Explanation
+
+1. The Interfaces (```/interfaces```)
 We use interfaces to decouple the Channel from the Users. The Channel doesn't need to know who the users are, only that they can be notified.
 
-Subject.java: Defines the methods any publisher must have:
+- ```Subject.java```: Defines the methods any publisher must have:
 
-subscribe(Observer o): Add someone to the list.
+    - ```subscribe(Observer observer)```: Add someone to the list.
 
-unsubscribe(Observer o): Remove someone from the list.
+    - ```unsubscribe(Observer observer)```: Remove someone from the list.
 
-notifyObservers(): Alert everyone in the list.
+    - ```notifyObservers()```: Alert everyone in the list.
 
-Observer.java: Defines the single method update(String msg) that allows an object to receive alerts.
+```Observer.java```: Defines the single method update(String msg) that allows an object to receive alerts.
 
-2. The Subject (/subject)
-YoutubeChannel.java: This is the core logic.
+2. The Subject (```/subject```)
+- ```YoutubeChannel.java```: This is the core logic.
+    - It maintains a ```List<Observer> subscribers```.
+    - Key Logic: When ```uploadVideo()``` is called, it triggers ```notifyObservers()```, which loops through the list and calls ```.update()``` on every subscriber.
 
-It maintains a List<Observer> subscribers.
 
-Key Logic: When uploadVideo() is called, it triggers notifyObservers(), which loops through the list and calls .update() on every subscriber.
+3. The Observers (```/observers```)
+We have two different classes implementing the same ```Observer``` interface. This demonstrates Polymorphism—the Subject treats them exactly the same, but they behave differently.
 
-3. The Observers (/observers)
-We have two different classes implementing the same Observer interface. This demonstrates Polymorphism—the Subject treats them exactly the same, but they behave differently.
+- ```EmailSubscriber.java```: Simulates sending an email alert in its ```update()``` method.
 
-EmailSubscriber.java: Simulates sending an email alert in its update() method.
-
-MobileAppUser.java: Simulates a phone push notification in its update() method.
+- ```MobileAppUser.java```: Simulates a phone push notification in its ```update()``` method.
 
 🚀 How to Run
 Prerequisites
-Java Development Kit (JDK) 8 or higher.
+- Java Development Kit (JDK) 8 or higher.
+- A terminal or command prompt.
 
-A terminal or command prompt.
-
-Step 1: Compilation
-Navigate to the src directory. You must compile the Main class and include all dependencies in the compilation path.
+### Step 1: Compilation
+Navigate to the ```src``` directory. You must compile the Main class and include all dependencies in the compilation path.
 
 ```bash
 cd ObserverPattern/src
@@ -72,7 +118,7 @@ javac com/designpatterns/main/YoutubeApp.java \
       com/designpatterns/observers/*.java
 ```
 
-Step 2: Execution
+### Step 2: Execution
 Run the application using the fully qualified package name.
 
 ```bash
@@ -110,11 +156,11 @@ When you run the application, the following sequence occurs:
 ```
 
 💡 Why use this pattern?
-Without this pattern, the YoutubeChannel would need to know the specific details of every user (e.g., if user is email type, call sendEmail()...).
+Without this pattern, ```YoutubeChannel``` would be tightly coupled to specific user classes (e.g., ```if (user is email) sendEmail()```).
 
-With the Observer Pattern:
+Key Benefits:
 
-1. Open/Closed Principle: You can add a new type of subscriber (e.g., TVAppSubscriber) without changing a single line of code in YoutubeChannel.
+ - ✅ Open/Closed Principle: You can add a ```TVAppSubscriber``` or ```SmartWatchSubscriber``` later without changing a single line of code in the Channel class.
 
-2. Loose Coupling: The Subject and Observers interact through interfaces, making the code easier to test and maintain.
+ - ✅ Loose Coupling: The Subject interacts only with the ```Observer``` interface, making the system flexible and easier to test.
 
