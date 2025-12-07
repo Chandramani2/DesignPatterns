@@ -79,6 +79,12 @@ ObserverPattern/
 1. The Interfaces (```/interfaces```)
 We use interfaces to decouple the Channel from the Users. The Channel doesn't need to know who the users are, only that they can be notified.
 
+| Interface | Role | Key Methods |
+| :--- | :--- | :--- |
+| **Subject** | The "Publisher" contract | `subscribe()`, `unsubscribe()`, `notifyObservers()` |
+| **Observer** | The "Subscriber" contract | `update(String msg)` |
+
+
 - ```Subject.java```: Defines the methods any publisher must have:
 
     - ```subscribe(Observer observer)```: Add someone to the list.
@@ -128,15 +134,15 @@ java com.designpatterns.main.YoutubeApp
 📝 Example Scenario & Output
 When you run the application, the following sequence occurs:
 
-1. Setup: A channel "CodeWithJava" is created.
+1. **Setup**: A channel "CodeWithJava" is created.
 
-2. Subscription: Alice (Email), Bob (Email), and Charlie (Mobile) subscribe.
+2. **Subscription**: Alice (Email), Bob (Email), and Charlie (Mobile) subscribe.
 
-3. Event 1: "CodeWithJava" uploads a video. -> All 3 get notified.
+3. **Event 1**: "CodeWithJava" uploads a video. -> All 3 get notified.
 
-4. Unsubscription: Bob unsubscribes.
+4. **Unsubscription**: Bob unsubscribes.
 
-5. Event 2: "CodeWithJava" uploads another video. -> Only Alice and Charlie get notified.
+5. **Event 2**: "CodeWithJava" uploads another video. -> Only Alice and Charlie get notified.
 
 ```text
 [System] New subscriber added to CodeWithJava
