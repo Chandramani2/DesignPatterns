@@ -85,8 +85,8 @@ abstract class Shape implements Cloneable {
 🔹 Abstract Factory
 Use when: You need to create families of related objects (e.g., DarkTheme Scrollbar + DarkTheme Window vs. LightTheme Scrollbar + LightTheme Window).
 
-<a name="structural"></a> 2. Structural Patterns
-Goal: Compose classes or objects into larger structures.
+## <a name="structural"></a> 2. Structural Patterns
+**Goal:**: Compose classes or objects into larger structures.
 
 🔹 Adapter
 Use when: You want to use an existing class, but its interface does not match the one you need (e.g., connecting a new payment gateway to a legacy app).
@@ -156,3 +156,85 @@ class ProxyImage implements Image {
     }
 }
 ```
+- Composite: Compose objects into tree structures (e.g., File system folders and files).
+
+- Bridge: Decouple an abstraction from its implementation so the two can vary independently.
+
+- Flyweight: Reduce storage costs for large numbers of fine-grained objects (e.g., rendering characters in a text editor).
+
+## <a name="behavioral"></a> 3. Behavioral Patterns
+Goal: Concern algorithms and the assignment of responsibilities between objects.
+
+🔹 Observer
+Use when: One object changes state, and all its dependents need to be notified automatically (e.g., YouTube channel subscribers).
+
+```java
+class NewsAgency {
+    private List<Observer> channels = new ArrayList<>();
+    
+    public void addObserver(Observer o) { channels.add(o); }
+    
+    public void broadcast(String news) {
+        for(Observer o : channels) o.update(news);
+    }
+}
+```
+
+🔹 Strategy
+Use when: You have multiple algorithms for a specific task and want to switch between them at runtime (e.g., Sorting algorithms, Payment methods).
+
+```java
+class ShoppingCart {
+    PaymentStrategy strategy;
+    
+    public void setPaymentStrategy(PaymentStrategy strategy) {
+        this.strategy = strategy;
+    }
+    
+    public void checkout(int amount) {
+        strategy.pay(amount);
+    }
+}
+// Usage: cart.setStrategy(new PaypalStrategy()); or cart.setStrategy(new CreditCardStrategy());
+```
+
+🔹 Command
+Use when: You want to parameterize objects with operations, queue operations, or support undoable operations.
+
+```java
+// Turns a request "Light On" into a stand-alone object
+class LightOnCommand implements Command {
+    Light light;
+    public void execute() { light.turnOn(); }
+}
+```
+
+🔹 State
+Use when: An object's behavior depends on its state, and it must change its behavior at runtime (e.g., A Document in Draft -> Moderation -> Published states).
+
+🔹 Template Method
+Use when: You want to define the skeleton of an algorithm in an operation, deferring some steps to subclasses.
+
+```java
+abstract class Game {
+    abstract void initialize();
+    abstract void startPlay();
+    abstract void endPlay();
+
+    // Template method
+    public final void play() {
+        initialize();
+        startPlay();
+        endPlay();
+    }
+}
+```
+- Chain of Responsibility: Pass requests along a chain of handlers (e.g., Tech support tiers).
+
+- Iterator: Access elements of a collection without exposing its underlying representation.
+
+- Mediator: Centralize complex communications and control between related objects (e.g., Air Traffic Control).
+
+- Memento: Capture and restore an object's internal state (Undo/Redo).
+
+- Visitor: specific operations from the objects on which they operate.
