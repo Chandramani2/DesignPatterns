@@ -24,6 +24,117 @@ src/
 ```
 
 ---
+# Vending Machine UML Class Diagram
+
+The following diagram illustrates the Low-Level Design (LLD) of the Vending Machine. It highlights the **State Design Pattern**, package organizations, and the relationships between the core context, states, inventory, and models.
+
+### Key Diagram Elements:
+* **Namespaces:** Groupings reflect the Java package structure (`com.vending`, `com.vending.state`, etc.).
+* **`<<interface>> State`**: The central interface defining behavior.
+* **Realization (`..|>`):** The dashed arrows showing that `IdleState`, `HasMoneyState`, and `DispenseState` implement the `State` interface.
+* **Composition (`*--`):** The solid diamond indicating strong ownership (e.g., `VendingMachine` owns `Inventory`).
+* **Aggregation (`o--`):** The hollow diamond indicating a "has-a" relationship where the lifecycle might not be bound (e.g., `VendingMachine` holds a reference to the current `State`).
+* **Dependency (`..>`):** The dashed arrow indicating that one class uses another (e.g., concrete States use the `VendingMachine` context to call setters).
+
+```mermaid
+classDiagram
+    %% --- Core Package ---
+    namespace com.vending {
+        class VendingMachine {
+            - State vendingMachineState
+            - Inventory inventory
+            - List~Coin~ coinList
+            + VendingMachine()
+            + getVendingMachineState() State
+            + setVendingMachineState(State state)
+            + getInventory() Inventory
+            + getCoinList() List~Coin~
+        }
+        class VendingMachineApplication {
+            + main(String[] args)$
+            - fillUpInventory(VendingMachine vm)$
+        }
+    }
+
+    %% --- State Package ---
+    namespace com.vending.state {
+        class State {
+            <<interface>>
+            + clickInsertCoinButton(VendingMachine machine)
+            + insertCoin(VendingMachine machine, Coin coin)
+            + clickSelectProductButton(VendingMachine machine, int codeNumber)
+            + refundFullMoney(VendingMachine machine) List~Coin~
+            + dispenseProduct(VendingMachine machine, int codeNumber) Item
+        }
+        class IdleState {
+            + IdleState()
+        }
+        class HasMoneyState {
+            + HasMoneyState()
+        }
+        class DispenseState {
+            + DispenseState(VendingMachine machine, int codeNumber)
+        }
+    }
+
+    %% --- Inventory Package ---
+    namespace com.vending.inventory {
+        class Inventory {
+            - Map~Integer, Item~ itemMap
+            - Map~Integer, Integer~ stockCount
+            + Inventory(int itemCount)
+            + addItem(Item item, int code)
+            + getItem(int code) Item
+            + updateSoldOutItem(int code)
+        }
+    }
+
+    %% --- Model Package ---
+    namespace com.vending.model {
+        class Coin {
+            <<enumeration>>
+            PENNY
+            NICKEL
+            DIME
+            QUARTER
+            + int value
+        }
+        class ItemType {
+            <<enumeration>>
+            COKE
+            PEPSI
+            JUICE
+            SODA
+        }
+        class Item {
+            - ItemType type
+            - int price
+            + getPrice() int
+        }
+    }
+
+    %% --- Relationships ---
+
+    %% The core State Pattern Realization
+    State <|.. IdleState : implements
+    State <|.. HasMoneyState : implements
+    State <|.. DispenseState : implements
+
+    %% Context relationships
+    VendingMachine o-- State : has current
+    VendingMachine *-- Inventory : owns
+    VendingMachine o-- Coin : holds temporary list
+    VendingMachineApplication ..> VendingMachine : creates & uses
+
+    %% State dependencies on Context
+    IdleState ..> VendingMachine : uses
+    HasMoneyState ..> VendingMachine : uses
+    DispenseState ..> VendingMachine : uses
+
+    %% Inventory and Model relationships
+    Inventory o-- Item : manages stock of
+    Item --> ItemType : has type
+```
 
 ## 2. Component Analysis & Design Rationale
 
