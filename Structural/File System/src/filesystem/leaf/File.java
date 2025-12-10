@@ -12,7 +12,21 @@ public class File implements FileSystemComponent {
     }
 
     @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
     public void showDetails(String indent) {
-        System.out.println(indent + "📄 File: " + name + " (" + sizeInMb + "MB)");
+        System.out.println(indent + "📄 File: " + name);
+    }
+
+    @Override
+    public FileSystemComponent searchDFS(String keyword) {
+        // Base case: If I am the file you are looking for, return me.
+        if (this.name.equals(keyword)) {
+            return this;
+        }
+        return null;
     }
 }

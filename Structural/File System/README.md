@@ -160,3 +160,67 @@ This is fundamentally a **Graph Traversal** problem. We can choose between two s
 * **BFS (Breadth First Search):**
   * **Mechanism:** We use an iterative approach with a `Queue` (FIFO) to explore the tree level-by-level.
   * **Pros:** Better if we want to find files located closer to the `Root` directory first. It also avoids `StackOverflowError` if the directory nesting is extremely deep.
+
+# Search Algorithms in File System Design
+
+This document details the logic and implementation location of the **DFS** (Depth-First Search) and **BFS** (Breadth-First Search) algorithms within the Composite Design Pattern structure.
+
+---
+
+## 1. Depth-First Search (DFS)
+
+### **Concept**
+DFS is the "natural" search strategy for the Composite pattern because the pattern itself relies on recursion. DFS explores a branch as deeply as possible before backtracking.
+
+* **Logic:**
+  1.  Check if the current node matches the search keyword.
+  2.  If not, iterate through the children.
+  3.  Call `searchDFS()` on each child (recursive step).
+  4.  If a child returns a result, propagate it up the stack.
+
+### **Classes Used**
+
+* **`FileSystemComponent` (Interface):**
+  * **Role:** Defines the contract `searchDFS(String keyword)`. This ensures that every node in the tree (whether a file or a folder) knows how to handle a search request.
+  * **Why here?** To allow polymorphism. The client does not need to know if it is asking a File or a Directory to search; it just calls the method.
+
+* **`File` (Leaf):**
+  * **Role:** Implements the **Base Case** of the recursion.
+  * **Logic:** It simply checks: *"Is my name the keyword?"* If yes, return `this`; otherwise, return `null`.
+
+* **`Directory` (Composite):**
+  * **Role:** Implements the **Recursive Step**.
+  * **Logic:** It checks itself first. If not found, it loops through its `children` list and delegates the search to them.
+
+---
+
+## 2. Breadth-First Search (BFS)
+
+### **Concept**
+BFS explores the tree level-by-level. It checks all files in the current directory before moving deeper into sub-directories. This is iterative rather than recursive.
+
+* **Logic:**
+  1.  Create a **Queue** (FIFO data structure).
+  2.  Add the starting directory to the Queue.
+  3.  While the Queue is not empty:
+    * Remove the front element.
+    * Check if it matches the keyword.
+    * If the element is a `Directory`, add all its immediate children to the back of the Queue.
+
+### **Classes Used**
+
+* **`Directory` (Composite):**
+  * **Role:** Contains the entire logic for the BFS algorithm.
+  * **Why here?** BFS requires knowledge of the `children` list to populate the Queue. Since `File` nodes (Leaves) do not have children, the traversal logic is best encapsulated within the container class.
+  * **Key Dependencies:** Uses `java.util.Queue` and `java.util.LinkedList` to manage the traversal order.
+
+---
+
+## 3. Comparison Summary
+
+| Feature | DFS (Recursive) | BFS (Iterative) |
+| :--- | :--- | :--- |
+| **Primary Class** | `FileSystemComponent` (Polymorphic) | `Directory` (Specific) |
+| **Data Structure** | Call Stack (System managed) | Queue (User managed) |
+| **Search Order** | Dives deep immediately. | Scans current folder completely first. |
+| **Best For** | Finding files known to be deep in the tree. | Finding files closer to the root (Top-level). |

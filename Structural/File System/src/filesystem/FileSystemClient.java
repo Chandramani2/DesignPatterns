@@ -6,26 +6,35 @@ import filesystem.leaf.File;
 
 public class FileSystemClient {
     public static void main(String[] args) {
-        // 1. Create Files
-        FileSystemComponent file1 = new File("resume.pdf", 2);
-        FileSystemComponent file2 = new File("photo.png", 5);
-        FileSystemComponent file3 = new File("movie.mp4", 500);
-
-        // 2. Create Directories
-        Directory rootDir = new Directory("Root");
+        // Setup Tree
+        Directory root = new Directory("Root");
         Directory documents = new Directory("Documents");
         Directory media = new Directory("Media");
+        Directory privateDocs = new Directory("Private"); // Deeply nested
 
-        // 3. Build Tree
+        FileSystemComponent file1 = new File("resume.pdf", 2);
+        FileSystemComponent file2 = new File("photo.png", 5);
+        FileSystemComponent file3 = new File("secret.txt", 1);
+
+        root.addComponent(documents);
+        root.addComponent(media);
         documents.addComponent(file1);
+        documents.addComponent(privateDocs); // Nested folder
+        privateDocs.addComponent(file3);     // Deep file
         media.addComponent(file2);
-        media.addComponent(file3);
 
-        rootDir.addComponent(documents);
-        rootDir.addComponent(media);
+        System.out.println("--- Tree Structure ---");
+        root.showDetails("");
 
-        // 4. Print Tree
-        System.out.println("--- Simplified Package Structure ---");
-        rootDir.showDetails("");
+        // --- Test DFS ---
+        System.out.println("\n--- Searching DFS (Recursive) ---");
+        FileSystemComponent resultDFS = root.searchDFS("secret.txt");
+        if(resultDFS != null) System.out.println("Found: " + resultDFS.getName());
+
+        // --- Test BFS ---
+        System.out.println("\n--- Searching BFS (Iterative) ---");
+        // BFS is specific to the Directory class implementation in this design
+        FileSystemComponent resultBFS = root.searchBFS("photo.png");
+        if(resultBFS != null) System.out.println("Found: " + resultBFS.getName());
     }
 }
