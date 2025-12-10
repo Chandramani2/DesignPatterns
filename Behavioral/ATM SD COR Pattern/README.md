@@ -154,3 +154,176 @@ If we used `switch` statements, every single method (`insertCard`, `enterPin`, `
 **Answer:**
 "Since the ATM is a physical device, it inherently acts as a Singleton. However, regarding the software instance: I would use the **Bill Pugh Singleton Implementation** or an **Enum Singleton** to ensure thread safety during initialization.
 More importantly, strict **synchronization** is needed on the `DispenseChain` methods to prevent two concurrent logical threads (e.g., a remote admin command and a local user) from triggering the hardware motor simultaneously."
+
+# Design Decision: Handling Unused Methods in State Pattern
+
+## 1. The Question
+> *"Why in Idle State do we have functions other than `insertCard`? Can we hide methods that shouldn't be used in a particular state?"*
+
+This is a classic Object-Oriented Design question touching on the **Interface Segregation Principle (ISP)**. While it seems logical to hide `enterPin` from `IdleState`, doing so breaks the **State Pattern**.
+
+## 2. Why we CANNOT hide the methods
+
+### A. Polymorphism & Context Ignorance
+The primary reason is that the Context class (`ATM.java`) **does not know** which state it is currently holding. It only knows it holds a generic `ATMState`.
+
+If `IdleState` does not have the `enterPin()` method, the following code in `ATM.java` would fail to compile:
+
+```java
+// Inside ATM.java
+public void enterPin(int pin) {
+    // The Compiler thinks: "I don't know if currentState is Idle or HasCard."
+    // "I only know it is an ATMState."
+    // "If ATMState doesn't have enterPin(), I cannot allow this call."
+    state.enterPin(this, pin); 
+}
+```
+
+### B. The "Hardware Driver" Analogy
+Think of the State Pattern as a driver for physical hardware.
+* The ATM keypad (hardware) exists even when the machine is Idle.
+* A user *can* physically press buttons at the wrong time.
+* Therefore, the software **must** have a method to catch that input, even if the implementation is just to ignore it or say "Invalid Action".
+
+### C. The Anti-Pattern: `instanceof` Checks
+If we split the interfaces (e.g., `PinEnterable`, `CardInsertable`), we would force the `ATM` class to use `if-else` and `instanceof` checks:
+
+```java
+// BAD CODE (Violates Open/Closed Principle)
+if (state instanceof PinEnterable) {
+    ((PinEnterable) state).enterPin();
+} else {
+    throw new Error("Cannot enter pin");
+}
+```
+This re-introduces the complexity we were trying to solve with the State Pattern.
+
+---
+
+## 3. The Solution: Abstract Base Class (Adapter)
+
+Instead of forcing every concrete state to implement empty methods or throw errors manually, we use an **Abstract Base Class**.
+
+1.  **Interface:** Defines all possible actions.
+2.  **Abstract Class:** Implements the Interface and provides a default "Error" or "Do Nothing" implementation for *everything*.
+3.  **Concrete States:** Extend the Abstract Class and **only override** the methods they care about.
+
+### UML Visualization
+
+```mermaid
+classDiagram
+    class ATMState {
+        <<interface>>
+        +insertCard()
+        +enterPin()
+        +ejectCard()
+    }
+
+    class BaseATMState {
+        <<abstract>>
+        +insertCard() : Error
+        +enterPin() : Error
+        +ejectCard() : Error
+    }
+
+    class IdleState {
+        +insertCard() : Override
+    }
+    class HasCardState {
+        +enterPin() : Override
+        +ejectCard() : Override
+    }
+
+    ATMState <|.. BaseATMState : Implements
+    BaseATMState <|-- IdleState : Extends
+    BaseATMState <|-- HasCardState : Extends
+```
+
+---
+
+## 4. Refactored Java Code
+
+### Step 1: The Interface (Remains the same)
+```java
+public interface ATMState {
+    void insertCard(ATM atm, Card card);
+    void enterPin(ATM atm, int pin);
+    void selectOperation(ATM atm, TransactionType type, int amount);
+    void ejectCard(ATM atm);
+}
+```
+
+### Step 2: The Abstract Base Class (The Cleaner)
+This class handles the "Noise". It provides the default "You can't do that" response.
+
+```java
+public abstract class BaseATMState implements ATMState {
+
+    @Override
+    public void insertCard(ATM atm, Card card) {
+        System.out.println("ERROR: You cannot insert a card right now.");
+    }
+
+    @Override
+    public void enterPin(ATM atm, int pin) {
+        System.out.println("ERROR: You cannot enter a PIN right now.");
+    }
+
+    @Override
+    public void selectOperation(ATM atm, TransactionType type, int amount) {
+         System.out.println("ERROR: Invalid operation for current state.");
+    }
+
+    @Override
+    public void ejectCard(ATM atm) {
+        System.out.println("ERROR: No card to eject.");
+    }
+}
+```
+
+### Step 3: The Idle State (Clean & Focused)
+Now `IdleState` is very clean. We don't need to mention `enterPin` or `ejectCard` because the `BaseATMState` handles them.
+
+```java
+public class IdleState extends BaseATMState {
+    
+    // We only override the ONE action allowed in this state
+    @Override
+    public void insertCard(ATM atm, Card card) {
+        System.out.println("Card Inserted.");
+        atm.setCurrentCard(card);
+        atm.setAtmState(new HasCardState());
+    }
+    
+    // enterPin(), ejectCard(), etc., are inherited from BaseATMState
+    // and will print "ERROR" automatically if called.
+}
+```
+
+### Step 4: The HasCard State
+This state needs two actions, so it overrides two methods.
+
+```java
+public class HasCardState extends BaseATMState {
+    
+    @Override
+    public void enterPin(ATM atm, int pin) {
+        if (atm.getCurrentCard().getPin() == pin) {
+            System.out.println("PIN Correct.");
+            atm.setAtmState(new SelectOperationState());
+        } else {
+            System.out.println("Invalid PIN.");
+            ejectCard(atm); // Calls the method below
+        }
+    }
+
+    @Override
+    public void ejectCard(ATM atm) {
+        System.out.println("Card Ejected.");
+        atm.setAtmState(new IdleState());
+    }
+
+    // insertCard() is NOT overridden, so calling it here triggers the 
+    // default error from BaseATMState ("Cannot insert card right now").
+}
+```
