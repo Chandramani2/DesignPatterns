@@ -368,3 +368,90 @@ public class Driver {
     }
 }
 ```
+
+# Deep Dive: Design Decisions & Senior Level Q&A
+
+## 1. Implementation Detail: Why Override `equals()` and `hashCode()`?
+
+In Java, the `equals()` and `hashCode()` methods are critical when using custom objects (like `User`) as **keys** in hash-based collections such as `HashMap` or `HashSet`.
+
+In our design, we store balances like this:
+```java
+Map<User, Double> netBalances = new HashMap<>();
+```
+
+### The Problem (Default Behavior)
+By default, Java's `Object` class uses the **memory address** of the object to calculate the hash code and determine equality. This leads to "logical" duplicates being treated as different keys.
+
+**Example Scenario:**
+```java
+// Two objects representing the same person
+User u1 = new User("101", "Alice");
+User u2 = new User("101", "Alice");
+
+netBalances.put(u1, 50.0);
+
+// Returns NULL because u2 has a different memory address than u1
+Double balance = netBalances.get(u2); 
+```
+
+### The Solution (Overriding)
+We override these methods to base equality on the **User ID** (business identity) rather than the **Memory Address** (object identity).
+
+1.  **`hashCode()`:** We return `id.hashCode()`. This ensures `u1` and `u2` land in the same "bucket" inside the HashMap.
+2.  **`equals()`:** We check `this.id.equals(other.id)`. This ensures the Map confirms they represent the same entity.
+
+---
+
+## 2. Senior Developer Level Q&A
+
+These questions move beyond basic coding into system design, scalability, and production-readiness.
+
+### Q1: You used `double` for currency. Is that acceptable in a production financial system?
+**Answer: No.**
+Using `double` or `float` for currency is a critical anti-pattern due to floating-point precision errors (IEEE 754 standard).
+* **The Issue:** `0.1 + 0.2` often results in `0.30000000000000004`. Over thousands of split transactions, these tiny errors accumulate, leading to "money appearing/disappearing" from the system.
+* **The Fix:** In production, use `BigDecimal` (Java) which handles arbitrary-precision signed decimal numbers.
+* **Alternative:** Store money as `long` representing the smallest unit (e.g., store cents: `$10.50` becomes `1050`). This is faster for calculation but requires careful formatting on the UI.
+
+### Q2: The current `simplifyDebts` uses a recursive greedy algorithm. What are the scaling implications?
+**Answer: The complexity is roughly O(N²).**
+In every recursive step, we sort or scan to find the max debtor and max creditor.
+* **Scale:** For a dinner party (N=10), this is instantaneous. For a massive group (N=10,000), this will cause stack overflow (recursion) or CPU timeouts.
+* **Optimization:**
+    1.  **Data Structures:** Use a **Min-Heap** and **Max-Heap** (`PriorityQueue`) to access the max debtor/creditor in `O(1)` time, reducing overall complexity to **O(N log N)**.
+    2.  **Partitioning:** In real-world scenarios, we rarely simplify the *entire* database of users globally. Simplification is usually bounded by a "Group" or a connected subgraph of friends.
+
+### Q3: How would you handle concurrency if multiple users add expenses simultaneously?
+**Answer: The current `HashMap` is not thread-safe.**
+* **Race Condition:** If Thread A reads `netBalances.get(alice)` as 100, and Thread B reads 100, both add 50 and write back 150. One update is lost (Lost Update Problem).
+* **Solution 1 (In-Memory):** Use `ConcurrentHashMap` and atomic operations like `netBalances.merge(key, value, Double::sum)`.
+* **Solution 2 (Database Level):** Don't hold state in memory. Use a database with **Pessimistic Locking** (`SELECT ... FOR UPDATE`) or **Optimistic Locking** (using a version column) on the Group row while updating balances.
+
+### Q4: The `User` object is mutable (if we added setters). Why is using mutable keys in a HashMap dangerous?
+**Answer: It can break the Map contract.**
+If the `User` class had a `setId()` method and the ID changed *after* the user was put into the `HashMap`:
+1.  The `hashCode()` would change.
+2.  The object would be effectively "lost" in the Map. It sits in the bucket corresponding to the *old* hash, but `get()` will look for it in the *new* hash bucket.
+* **Senior Rule:** Keys in a Map should always be **Immutable**. If the object itself isn't immutable, the fields used for `hashCode` and `equals` must be `final`.
+
+### Q5: We are using the Observer pattern for notifications. What happens if the Email Service is down or slow?
+**Answer: It blocks the main thread.**
+In the current synchronous design, if `emailObserver.onExpenseAdded()` takes 5 seconds (network timeout), the `addExpense()` method blocks for 5 seconds. The user sees a loading spinner just because the email failed.
+* **The Fix:** Decouple execution.
+    1.  The Observer should simply publish an event to a **Message Queue** (Kafka/RabbitMQ).
+    2.  A separate Worker Service consumes the message and sends the email asynchronously.
+    3.  This ensures the core "Add Expense" transaction is fast (low latency) and resilient to notification failures.
+
+### Q6: How does the "Min Cash Flow" algorithm handle Graph Cycles (e.g., A → B → C → A)?
+**Answer: It resolves them implicitly via Net Balance.**
+The beauty of the "net balance" approach is that cycles cancel out during the pre-calculation phase.
+* **Scenario:**
+    * A pays B $10 (A: +10, B: -10)
+    * B pays C $10 (B: +10, C: -10)
+    * C pays A $10 (C: +10, A: -10)
+* **Result:**
+    * A Net: +10 - 10 = **0**
+    * B Net: -10 + 10 = **0**
+    * C Net: -10 + 10 = **0**
+* **Outcome:** Since everyone is at 0, the algorithm sees no debts to settle. The cycle is resolved without complex graph traversal logic.
