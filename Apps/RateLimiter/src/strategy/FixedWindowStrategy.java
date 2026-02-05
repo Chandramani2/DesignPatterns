@@ -9,7 +9,7 @@ public class FixedWindowStrategy implements RateLimiterStrategy {
     private long windowStart;
     private final AtomicInteger counter = new AtomicInteger(0);
 
-    public FixedWindowStrategy(long windowStart, long windowSizeInMs, int limit) {
+    public FixedWindowStrategy(int limit, long windowSizeInMs) {
         this.windowStart = System.currentTimeMillis();
         this.windowSizeInMs = windowSizeInMs;
         this.limit = limit;
